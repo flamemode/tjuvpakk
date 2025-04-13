@@ -213,133 +213,314 @@ function Lobby() {
   const isAlive = (state?.players.find(p => p.name === playerName)?.hp ?? 0) > 0;
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-xl mb-2">Lobby-id: {lobbyId}</h2>
-      <p className="mb-4 text-lg">🌀 Round: {state?.round ?? "?"}</p>
-      <p className="mb-4 text-lg">🦹‍♂️ Your Name: {playerName}</p>
-      <div className="mb-4">
-        <h3 className="font-bold">Players in Lobby</h3>
-        <ul className="list-disc pl-6">
-        {state?.players.map(p => (
-          <li key={p.name}>
-            {p.hp <= 0 && "☠️ "}
-            {(state.winner === p.name || (!state.winner && state.raidwinner === p.name)) && "👑 "}
-            {p.name}
-            {state.readyPlayers?.includes(p.name) && " ✅"}
-          </li>
-        ))}
-        </ul>
-      </div>
-      <div className="mb-4">
-        <h3 className="font-bold">Your Stats</h3>
-        <p>❤: {myPlayer?.hp} | 💰: {myPlayer?.coins} | ⚔: {myPlayer?.attackDamage}</p>
-      </div>
-      {!gameOver && !isDenied && isAlive &&(
-  <div className="mb-4">
-    <div className="mb-2">
-      <h4 className="font-semibold mb-1">Choose Action</h4>
-      <div className="flex flex-wrap gap-2">
-        {["attack", "defend", "raid"].map(act => (
-          <button
-            key={act}
-            className={`p-2 border rounded ${
-              action === act ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setAction(act)}
-            >
-            {act.charAt(0).toUpperCase() + act.slice(1)}
-          </button>
-        ))}
-        {action === "attack" && (
-          <select className="border p-2 mb-2" value={target} onChange={e => setTarget(e.target.value)}>
-            <option value="">Select target</option>
-            {otherPlayers?.map(p => (
-              <option key={p.name} value={p.name}>{p.name}</option>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-8">
+      <div className="w-full max-w-3xl flex flex-col items-center rounded-2xl shadow-xl bg-white/80 backdrop-blur-sm transition-all duration-300">
+        <h2 className="text-3xl font-extrabold text-gray-900 mt-6 mb-4 tracking-tight animate-fade-in">
+          Lobby ID: {lobbyId}
+        </h2>
+        <p className="mb-3 text-lg text-gray-600 font-medium">
+          🌀 Round: {state?.round ?? "?"}
+        </p>
+        <p className="mb-6 text-lg text-gray-600 font-medium">
+          🦹‍♂️ Your Name: {playerName}
+        </p>
+  
+        <div className="w-full mb-6 bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+          <h3 className="font-semibold text-xl text-gray-800 mb-4">Players in Lobby</h3>
+          <ul className="list-disc pl-6 text-gray-700 space-y-2">
+            {state?.players.map(p => (
+              <li key={p.name} className="py-1 flex items-center gap-2">
+                {p.hp <= 0 && <span className="text-red-500">☠️</span>}
+                {(state.winner === p.name || (!state.winner && state.raidwinner === p.name)) && (
+                  <span className="text-yellow-500">👑</span>
+                )}
+                <span className="font-medium">{p.name}</span>
+                {state.readyPlayers?.includes(p.name) && <span className="text-green-500">✅</span>}
+              </li>
             ))}
-          </select>
-        )}
-      </div>
-    </div>
-    <div>
-      <h4 className="font-semibold mb-1">Choose Resource</h4>
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: "gain_hp", label: "Get ❤" },
-          { id: "gain_coin", label: "Get 💰" },
-          { id: "gain_attack", label: "Get ⚔" },
-        ].map(res => (
-          <button
-            key={res.id}
-            className={`p-2 border rounded ${
-              resource === res.id ? "bg-green-600 text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setResource(res.id)}
-          >
-            {res.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  </div>
-)}
-      {!gameOver && !isDenied && isAlive &&(
-        <>
-      <button className="bg-blue-600 text-white px-4 py-2" onClick={handleSubmit}>Submit</button>
-        </>
-      )}
-          {statusMsg && <p className="mt-2 text-sm text-gray-700">{statusMsg}</p>}
-
-      <div className="mt-6">
-        <h3 className="font-bold mb-2">Round Messages</h3>
-        <ul className="list-disc pl-6">
-          {messages?.map((m, i) => (
-            <li key={i}>{Array.isArray(m) ? m.join(" ") : m}</li>
-          ))}
-        </ul>
-        {isChoosingDeny && (
-  <div className="bg-yellow-100 border border-yellow-300 p-4 mt-4 rounded">
-    <h3 className="font-bold mb-2">🛑 Choose someone to deny next round</h3>
-    <select
-      className="border p-2 mr-2"
-      value={denyTarget}
-      onChange={(e) => setDenyTarget(e.target.value)}
-    >
-      <option value="">Select player</option>
-      {eligibleTargets.map((p) => (
-        <option key={p.name} value={p.name}>
-          {p.name}
-        </option>
-      ))}
-    </select>
-    <button
-      className="bg-red-500 text-white px-4 py-2"
-      disabled={!denyTarget}
-      onClick={async () => {
-        const res = await fetch(`${BACKEND_URL}/submit_deny_target/${lobbyId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ player: playerName, target: denyTarget }),
-        });
-        if (res.ok) {
-          setStatusMsg("🚫 Deny choice submitted!");
-        } else {
-          setStatusMsg("❌ Something went wrong submitting deny.");
-        }
-      }}
-    >
-      Deny
-    </button>
-  </div>
-)}
-        {gameOver && (
-          <div className="bg-green-100 border border-green-400 text-green-800 p-4 rounded mt-6 text-center">
-          🎉 Game Over! {alivePlayers[0]?.name} has won the game!
-          <Link to="/" className="underline text-blue-600" style={{ fontSize: "1rem" }}>
-          ← Back to Home
-          </Link>
+          </ul>
+        </div>
+  
+        <div className="w-full mb-6 bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+          <h3 className="font-semibold text-xl text-gray-800 mb-4">Your Stats</h3>
+          <p className="text-gray-700 flex gap-4">
+            <span>
+              ❤ <span className="font-semibold text-red-500">{myPlayer?.hp}</span>
+            </span>
+            <span>
+              💰 <span className="font-semibold text-yellow-500">{myPlayer?.coins}</span>
+            </span>
+            <span>
+              ⚔ <span className="font-semibold text-blue-500">{myPlayer?.attackDamage}</span>
+            </span>
+          </p>
+        </div>
+  
+        {!gameOver && !isDenied && isAlive && (
+          <div className="w-full mb-6 bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="mb-6">
+              <h4 className="font-semibold text-lg text-gray-800 mb-3">Choose Action</h4>
+              <div className="flex flex-wrap gap-3">
+                {["attack", "defend", "raid"].map(act => (
+                  <button
+                    key={act}
+                    className={`px-5 py-2.5 rounded-lg font-medium text-sm uppercase tracking-wide transition-all duration-200 transform hover:scale-105 ${
+                      action === act
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={() => setAction(act)}
+                  >
+                    {act.charAt(0).toUpperCase() + act.slice(1)}
+                  </button>
+                ))}
+                {action === "attack" && (
+                  <select
+                    className="border border-gray-200 rounded-lg p-2.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    value={target}
+                    onChange={e => setTarget(e.target.value)}
+                  >
+                    <option value="">Select target</option>
+                    {otherPlayers?.map(p => (
+                      <option key={p.name} value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-lg text-gray-800 mb-3">Choose Resource</h4>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { id: "gain_hp", label: "Get ❤" },
+                  { id: "gain_coin", label: "Get 💰" },
+                  { id: "gain_attack", label: "Get ⚔" },
+                ].map(res => (
+                  <button
+                    key={res.id}
+                    className={`px-5 py-2.5 rounded-lg font-medium text-sm uppercase tracking-wide transition-all duration-200 transform hover:scale-105 ${
+                      resource === res.id
+                        ? "bg-green-600 text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    onClick={() => setResource(res.id)}
+                  >
+                    {res.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+        )}
+  
+        {!gameOver && !isDenied && isAlive && (
+          <button
+            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-md mb-6"
+            onClick={handleSubmit}
+          >
+            Submit
+          </button>
+        )}
+  
+        {statusMsg && (
+          <p className="mt-4 text-sm text-gray-600 bg-gray-100 p-4 rounded-lg shadow-inner animate-fade-in mb-6">
+            {statusMsg}
+          </p>
+        )}
+  
+        <div className="w-full mt-2 mb-6">
+          <h3 className="font-semibold text-xl text-gray-800 mb-4 px-6">Round Messages</h3>
+          <ul className="list-disc pl-6 text-gray-700 bg-white p-6 rounded-xl shadow-sm space-y-2">
+            {messages?.map((m, i) => (
+              <li key={i} className="py-1">{Array.isArray(m) ? m.join(" ") : m}</li>
+            ))}
+          </ul>
+  
+          {isChoosingDeny && (
+            <div className="bg-yellow-50 border border-yellow-200 p-6 mt-6 rounded-xl shadow-sm animate-slide-up">
+              <h3 className="font-semibold text-lg text-yellow-800 mb-4">
+                🛑 Choose someone to deny next round
+              </h3>
+              <div className="flex gap-4 items-center">
+                <select
+                  className="border border-gray-200 rounded-lg p-2.5 bg-white text-gray-700 flex-1 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+                  value={denyTarget}
+                  onChange={e => setDenyTarget(e.target.value)}
+                >
+                  <option value="">Select player</option>
+                  {eligibleTargets.map(p => (
+                    <option key={p.name} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+                <button
+                  className="bg-red-500 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-red-600 transition-all duration-200 transform hover:scale-105 disabled:bg-red-300 disabled:cursor-not-allowed"
+                  disabled={!denyTarget}
+                  onClick={async () => {
+                    const res = await fetch(`${BACKEND_URL}/submit_deny_target/${lobbyId}`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ player: playerName, target: denyTarget }),
+                    });
+                    if (res.ok) {
+                      setStatusMsg("🚫 Deny choice submitted!");
+                    } else {
+                      setStatusMsg("❌ Something went wrong submitting deny.");
+                    }
+                  }}
+                >
+                  Deny
+                </button>
+              </div>
+            </div>
           )}
+  
+          {gameOver && (
+            <div className="bg-green-50 border border-green-200 text-green-800 p-6 rounded-xl mt-6 text-center shadow-sm animate-slide-up">
+              <p className="text-xl font-semibold mb-3">
+                🎉 Game Over! {alivePlayers[0]?.name} has won the game!
+              </p>
+              <Link
+                to="/"
+                className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
+              >
+                ← Back to Home
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+{/* GAMMELT DESIGN */}
+
+//         <div className="p-6 max-w-2xl mx-auto items-center flex flex-col">
+//       <h2 className="text-xl mb-2">Lobby-id: {lobbyId}</h2>
+//       <p className="mb-4 text-lg">🌀 Round: {state?.round ?? "?"}</p>
+//       <p className="mb-4 text-lg">🦹‍♂️ Your Name: {playerName}</p>
+//       <div className="mb-4">
+//         <h3 className="font-bold">Players in Lobby</h3>
+//         <ul className="list-disc pl-6">
+//         {state?.players.map(p => (
+//           <li key={p.name}>
+//             {p.hp <= 0 && "☠️ "}
+//             {(state.winner === p.name || (!state.winner && state.raidwinner === p.name)) && "👑 "}
+//             {p.name}
+//             {state.readyPlayers?.includes(p.name) && " ✅"}
+//           </li>
+//         ))}
+//         </ul>
+//       </div>
+//       <div className="mb-4">
+//         <h3 className="font-bold">Your Stats</h3>
+//         <p>❤: {myPlayer?.hp} | 💰: {myPlayer?.coins} | ⚔: {myPlayer?.attackDamage}</p>
+//       </div>
+//       {!gameOver && !isDenied && isAlive &&(
+//   <div className="mb-4">
+//     <div className="mb-2">
+//       <h4 className="font-semibold mb-1">Choose Action</h4>
+//       <div className="flex flex-wrap gap-2">
+//         {["attack", "defend", "raid"].map(act => (
+//           <button
+//             key={act}
+//             className={`p-2 border rounded ${
+//               action === act ? "bg-blue-600 text-white" : "bg-gray-200"
+//             }`}
+//             onClick={() => setAction(act)}
+//             >
+//             {act.charAt(0).toUpperCase() + act.slice(1)}
+//           </button>
+//         ))}
+//         {action === "attack" && (
+//           <select className="border p-2 mb-2" value={target} onChange={e => setTarget(e.target.value)}>
+//             <option value="">Select target</option>
+//             {otherPlayers?.map(p => (
+//               <option key={p.name} value={p.name}>{p.name}</option>
+//             ))}
+//           </select>
+//         )}
+//       </div>
+//     </div>
+//     <div>
+//       <h4 className="font-semibold mb-1">Choose Resource</h4>
+//       <div className="flex flex-wrap gap-2">
+//         {[
+//           { id: "gain_hp", label: "Get ❤" },
+//           { id: "gain_coin", label: "Get 💰" },
+//           { id: "gain_attack", label: "Get ⚔" },
+//         ].map(res => (
+//           <button
+//             key={res.id}
+//             className={`p-2 border rounded ${
+//               resource === res.id ? "bg-green-600 text-white" : "bg-gray-200"
+//             }`}
+//             onClick={() => setResource(res.id)}
+//           >
+//             {res.label}
+//           </button>
+//         ))}
+//       </div>
+//     </div>
+//   </div>
+// )}
+//       {!gameOver && !isDenied && isAlive &&(
+//         <>
+//       <button className="bg-blue-600 text-white px-4 py-2" onClick={handleSubmit}>Submit</button>
+//         </>
+//       )}
+//           {statusMsg && <p className="mt-2 text-sm text-gray-700">{statusMsg}</p>}
+
+//       <div className="mt-6">
+//         <h3 className="font-bold mb-2">Round Messages</h3>
+//         <ul className="list-disc pl-6">
+//           {messages?.map((m, i) => (
+//             <li key={i}>{Array.isArray(m) ? m.join(" ") : m}</li>
+//           ))}
+//         </ul>
+//         {isChoosingDeny && (
+//   <div className="bg-yellow-100 border border-yellow-300 p-4 mt-4 rounded">
+//     <h3 className="font-bold mb-2">🛑 Choose someone to deny next round</h3>
+//     <select
+//       className="border p-2 mr-2"
+//       value={denyTarget}
+//       onChange={(e) => setDenyTarget(e.target.value)}
+//     >
+//       <option value="">Select player</option>
+//       {eligibleTargets.map((p) => (
+//         <option key={p.name} value={p.name}>
+//           {p.name}
+//         </option>
+//       ))}
+//     </select>
+//     <button
+//       className="bg-red-500 text-white px-4 py-2"
+//       disabled={!denyTarget}
+//       onClick={async () => {
+//         const res = await fetch(`${BACKEND_URL}/submit_deny_target/${lobbyId}`, {
+//           method: "POST",
+//           headers: { "Content-Type": "application/json" },
+//           body: JSON.stringify({ player: playerName, target: denyTarget }),
+//         });
+//         if (res.ok) {
+//           setStatusMsg("🚫 Deny choice submitted!");
+//         } else {
+//           setStatusMsg("❌ Something went wrong submitting deny.");
+//         }
+//       }}
+//     >
+//       Deny
+//     </button>
+//   </div>
+// )}
+//         {gameOver && (
+//           <div className="bg-green-100 border border-green-400 text-green-800 p-4 rounded mt-6 text-center">
+//           🎉 Game Over! {alivePlayers[0]?.name} has won the game!
+//           <Link to="/" className="underline text-blue-600" style={{ fontSize: "1rem" }}>
+//           ← Back to Home
+//           </Link>
+//           </div>
+//           )}
+//       </div>
+//     </div>
+
