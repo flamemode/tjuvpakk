@@ -87,18 +87,18 @@ function Home() {
   <img
           src="/images/logo.png" 
           alt="Tavernkeeper Logo"
-          className="h-40 w-60 mb-20" 
+          className="h-40 w-60 mb-5" 
         />
     
 
     {/* Instructions */}
-    <div className="text-center mb-6">
-      <p className="text-lg text-black">One Person needs to create a lobby</p>
-      <p className="text-lg text-black">Then share the lobby id to other players</p>
+    <div className="text-center mb-5">
+      <h2 className="text-lg text-black"><span className="text-green-600">O</span>ne Person needs to create a lobby</h2>
+      <h2 className="text-lg text-black"><span className="text-green-600">T</span>hen share the lobby id to other players</h2>
     </div>
 
     {/* Input Fields and Join Button */}
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center space-y-4 mt-4">
       <input
         type="text"
         placeholder="Enter your name"
@@ -128,9 +128,12 @@ function Home() {
         Create lobby
       </button>
     </div>
-    <Link to="/rules" className="text-red-600 text-3xl underline mt-6 text-center">
+    <div className="text-blue-800 underline text-3xl mt-4 text-center">
+    <Link to="/rules">
   📜 Rules
   </Link>
+    </div>
+   
   </div>
 </div>
   );
