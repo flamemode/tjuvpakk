@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Rules from "./rules/Rules";
 import { BrowserRouter as Router, Route, Routes, useNavigate, useParams, Link } from "react-router-dom";
+import SoundtrackButton from "./musicplayer"
 const BACKEND_URL = "https://tjuvpakk-backend.onrender.com"; //ONLINE
 //const BACKEND_URL = "http://localhost:5000"; // OFFLINE
 
@@ -75,6 +76,11 @@ function Home() {
     alt="Background"
     className="absolute top-0 left-0 w-full h-full object-cover z-0"
   />
+
+   {/* Soundtrack Button in Top-Right Corner */}
+   <div className="absolute top-4 right-4 z-20">
+      <SoundtrackButton />
+    </div>
 
   {/* Content */}
   <div className="relative z-10 flex flex-col items-center justify-center">
